@@ -1,0 +1,12 @@
+syntax = "proto3";
+package rpcdemo;
+message rpc
+{
+    string req_class = 2;
+    string req_action = 3;
+    string req_params = 4;
+
+    string res_data = 5;
+    int32 res_code = 6;
+    int32 res_time = 7;
+}

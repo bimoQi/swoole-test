@@ -8,15 +8,15 @@
  *  注意：不能保证全局变量和static的一致性
  */
 Swoole\Runtime::enableCoroutine(); // 是否启动协程
-$i = 0;
-while ($i < 100) {
-    go(function () {
-        exec('php /private/var/www/fishing/fishing-server-happy-os/artisan fix');
-    });
-    echo $i;
-    $i++;
-}
-exit;
+// $i = 0;
+// while ($i < 100) {
+//     go(function () {
+//         exec('php /private/var/www/fishing/fishing-server-happy-os/artisan fix');
+//     });
+//     echo $i;
+//     $i++;
+// }
+// exit;
 function fuc($b)
 {
     echo $b . PHP_EOL;

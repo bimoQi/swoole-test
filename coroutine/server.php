@@ -4,7 +4,7 @@ $http = new Swoole\Http\Server('0.0.0.0', 9504);
 
 $http->set([
     'worker_num' => 1,
-    'memory_limit' => 1000,
+    'max_coroutine' => 1000,
 ]);
 $http->on('request', function ($req, $res) {
     // $client = new Swoole\Client(SWOOLE_SOCK_TCP);    // 没有使用协程, 速度是 sum(clent->recv 的time)

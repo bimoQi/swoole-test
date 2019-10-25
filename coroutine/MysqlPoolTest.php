@@ -7,12 +7,12 @@
  * 案例：https://blog.csdn.net/weixin_33834679/article/details/92266809
  * 下面案例 修改use_coroutine 是否使用协程mysql-client 使用ab测试工具ab -n 30 -c 30 127.0.0.1:9501/
  * 进程数量设置为2 可以看出使用了之后 效率高很多，当然这个只是适用于超高并发，普通的php-fpm已经足够
- * 
+ *
  ************************************
  * 所以要注意的是，协程的客户端内执行其实是同步的，不要理解为异步，它只是遇到IO阻塞时能让出执行权，切换到其他协程而已，不能和异步混淆。
  ************************************
- * 
- * 
+ *
+ *
  * 传统pdo形式：
  *              server监听用户请求，当接收发请求时，调用连接数的getConnection()方法从connections通道中pop()一个对象。
  *              此时如果并发了10个请求，server因为配置了1个worker,所以再pop到一个对象返回时，遇到sleep()的查询，
@@ -23,7 +23,7 @@
  *              但是在第一请求到达，pop出池中的一个连接对象，执行到query()方法，遇上sleep阻塞时，此时，woker进程不是在等待select的完成，
  *              而是切换到另外的协程去处理下一个请求。完成后同样释放对象到池中
  */
-include __DIR__.'/AbstractPool.php';
+include __DIR__ . '/AbstractPool.php';
 
 class MysqlPoolPdo extends AbstractPool
 {
@@ -42,7 +42,6 @@ class MysqlPoolPdo extends AbstractPool
     }
 }
 
-
 class MysqlPoolCoroutine extends AbstractPool
 {
     public static $instance;
@@ -56,7 +55,6 @@ class MysqlPoolCoroutine extends AbstractPool
     }
     protected function createDb()
     {
-        echo 'create';
         $db = new Swoole\Coroutine\Mysql();
         $bool = $db->connect($this->db_conf);
         if ($bool == false) {
@@ -66,10 +64,11 @@ class MysqlPoolCoroutine extends AbstractPool
     }
 }
 
-$use_coroutine = 1;
+$use_coroutine = 0;
 $http = new Swoole\Http\Server('0.0.0.0', 9501);
 $http->set([
-    'worker_num' => 1,  // 进程数
+    'worker_num' => 1, // 进程数
+    'max_coroutine' => 1000,
 ]);
 
 $http->on('request', function ($req, $res) use ($use_coroutine) {
@@ -81,8 +80,8 @@ $http->on('request', function ($req, $res) use ($use_coroutine) {
     }
 
     $db = $obj ? $obj['db'] : null;
-    if ($db) {  //遇到阻塞，协程会
-        // var_dump($obj);
+    if ($db) { //如果是mysql协程client 遇到阻塞，协程会让出执行权，等下一个协程进来，如果是PDO，会阻塞等待
+        // echo 'hello';
         $db->query('select sleep(2)');
         $ret = $db->query('select count(1) from user');
         if ($use_coroutine) {
@@ -95,7 +94,7 @@ $http->on('request', function ($req, $res) use ($use_coroutine) {
         }
         $res->end(json_encode($ret));
     } else {
-        echo 'db not inaf';
+        echo 'db not find';
     }
 });
 
@@ -106,6 +105,5 @@ $http->on('workerStart', function () use ($use_coroutine) {
         MysqlPoolPdo::getInstance()->init();
     }
 });
-
 
 $http->start();
