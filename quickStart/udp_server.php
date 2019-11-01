@@ -10,12 +10,10 @@ $serv = new Swoole\Server('0.0.0.0', 9902, SWOOLE_PROCESS, SWOOLE_SOCK_UDP);
 //监听接收
 $serv->on('packet', function ($serv, $data, $clientInfo) {
     var_dump($clientInfo);
-    $serv->sendto($clientInfo['address'], $clientInfo['port'], 'Server:'.$data);
+    $serv->sendto($clientInfo['address'], $clientInfo['port'], 'Server:' . $data);
 });
 
 // 启动服务
 $serv->start();
 
-
-
-//测试方法-使用udp方式  nc -u 127.0.0.1 9902 
+//测试方法-使用udp方式  nc -u 127.0.0.1 9902
