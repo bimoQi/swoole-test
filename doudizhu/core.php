@@ -207,7 +207,7 @@ class Core
         echo PHP_EOL;
         echo '----------listenUser--------- userid:' . $user_id . PHP_EOL;
         //出牌：若超时没有出牌 则开始托管模式
-        swoole_timer_after(300, function () use ($user_id) {
+        swoole_timer_after(1000, function () use ($user_id) {
             $this->fd_user = $this->user_service->getUserInfoByKey('id', $user_id);
             $room = $this->room_service->getRoomInfo($this->fd_user['room_id']);
             if ($room['card_info']['last_out_user_id'] == $user_id) {
@@ -230,7 +230,7 @@ class Core
                 } else {
                     $res = $this->palyCards();
                     if ($res) {
-                        echo 'res::::' . json_encode($res);
+                        echo '出牌异常结果：' . json_encode($res, JSON_UNESCAPED_UNICODE);
                     }
                 }
             } catch (\Exception $e) {
@@ -412,7 +412,6 @@ class Core
             echo '----------- 游戏结束，胜利者:' . ($win_role == 'landlord' ? '地主' : '平民');
             $this->room_service->overGame($room['id']);
         } else {
-            echo '----------- next_listen' . PHP_EOL;
             // 监听下一个用户发牌
             $this->listenUser($next_paly_user_id);
         }
