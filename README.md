@@ -1,9 +1,13 @@
-### 设计斗地主游戏-服务端
+### 个人学习代码
 
-#### 测试
-- php server.php ##启动服务端
-- php client_test.php ## 启动测试client  需要开通三个命令行进行测试（自动抢地主，自动出牌）
-
-#### 其他
-* 完全采用内存处理用户和房间数据
-* 1秒一次出牌延迟
+#### 目录以及说明
+|目录 | 说明 |
+-|-
+chat | swoole的简单聊天功能
+coroutine | swoole的协程测试，分别使用mysql同步client和协程client进行测试连接池
+doudizhu | 斗地主服务端的实现，client没有时间/精力做
+io-test | 使用原生的php进行io的一些测试，其中epoll.php需要格外增加php扩展libevent
+protobuf | 使用protobuf和swoole做rpc传输
+quickStart | 一些swoole快速练习模块
+server | 简单的测试
+websocket | websocket 测试
