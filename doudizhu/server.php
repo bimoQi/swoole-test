@@ -3,19 +3,21 @@
 require_once __DIR__ . '/core.php';
 require_once __DIR__ . '/room.php';
 require_once __DIR__ . '/user.php';
+require_once __DIR__ . '/card_utils.php';
 
 class WsServer
 {
     private $host = '0.0.0.0';
     private $port = 9999;
-    private $server;
-    private $log;
+    public $server;
 
-    private $room;
-    private $user;
+    public $room_server;
+    public $user_server;
+
+    private $ctl_level = 2;
 
     protected $ws_config = array(
-        'dispatch_mode' => 3,
+        'dispatch_mode' => 2,
         'open_length_check' => 1,
         'package_length_type' => 'N',
         'package_length_offset' => 0,
@@ -25,12 +27,12 @@ class WsServer
         'buffer_output_size' => 3145728, //1024 * 1024 * 3,
         'pipe_buffer_size' => 33554432, // 1024 * 1024 * 32,
 
-        'heartbeat_check_interval' => 30,
-        'heartbeat_idle_time' => 60,
+        'heartbeat_check_interval' => 3000,
+        'heartbeat_idle_time' => 6000,
 
         'max_conn' => 2000,
-        'worker_num' => 2,
-        'task_worker_num' => 4, //生产环境请加大，建议1000
+        'worker_num' => 3,
+        'task_worker_num' => 10, //生产环境请加大，建议1000
 
         'max_request' => 0, //必须设置为0，否则会导致并发任务超时,don't change this number
         'task_max_request' => 2000,
@@ -46,8 +48,8 @@ class WsServer
 
     public function start()
     {
-        $this->room = new Room($this);
-        $this->user = new User($this);
+        $this->room_server = new Room($this);
+        $this->user_server = new User($this);
 
         $this->server = new Swoole\WebSocket\Server($this->host, $this->port);
         $this->server->set($this->ws_config);
@@ -70,7 +72,6 @@ class WsServer
     public function onOpen($server, $request)
     {
         $stats = $server->stats();
-        $this->room->enter($request->fd);
         $this->log("onOpen connection open: #" . $request->fd . "  connection_num:{$stats['connection_num']}，accept_count:{$stats['accept_count']}，close_count:{$stats['close_count']}");
     }
 
@@ -96,7 +97,7 @@ class WsServer
     public function onTask($serv, $task_id, $worker_id, $data)
     {
         $this->log('Recv [' . $data['fd'] . '] <<< ' . json_encode($data, JSON_UNESCAPED_UNICODE));
-        $res_data = (new Core())->exec($data, $this->room, $this->user);
+        $res_data = (new Core($this))->exec($data, $this->room_server, $this->user_server);
         return $res_data;
     }
 
@@ -107,7 +108,9 @@ class WsServer
             2 => 'DEBUG',
             3 => 'ERROR',
         ];
-        echo '[' . $level_map[$level] . '] ' . '[' . date('Y-m-d H:i:s') . '] ' . $msg . PHP_EOL;
+        if ($level >= $this->ctl_level) {
+            echo '[' . $level_map[$level] . '] ' . '[' . date('Y-m-d H:i:s') . '] ' . $msg . PHP_EOL;
+        }
     }
 }
 
